@@ -105,11 +105,11 @@ class SolarlikePeakbagging:
 		self.powers = self._smooth_wrapper(self.freq, self.power, period, "bartlett")
 		return
 
-	def _smooth_wrapper(x, y, period, windowtype, samplinginterval=None):
+	def _smooth_wrapper(self, x, y, period, windowtype, samplinginterval=None):
 
 		if samplinginterval is None: samplinginterval = np.median(x[1:-1] - x[0:-2])
 		if not windowtype in ["flat", "hanning", "hamming", "bartlett", "blackman"]:
-			raise ValueError("Window is on of 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'")
+			raise ValueError("Window is one of 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'")
 
 		xp = np.arange(np.min(x), np.max(x), samplinginterval)
 		yp = np.interp(xp, x, y)
