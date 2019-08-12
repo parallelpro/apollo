@@ -551,6 +551,7 @@ class SolarlikePeakbagging:
 
 	def fit_mode(self,
 		igroup=None, ifTestH1=False,
+		priorGuess=None, initGuess=None,
 		ifResolved=True, resolution=None,
 		ifSplit=False, inclination=None,
 		ifVaryLwPerMode=True, ifVaryFsPerMode=True, ifVaryAmpPerMode=True,
@@ -615,10 +616,7 @@ class SolarlikePeakbagging:
 		if igroup is None: 
 			groups = np.unique(self.modeInputTable["igroup"])
 		else:
-			if type(igroup) is int: 
-				groups = np.array([igroup], dtype=int)
-			else:
-				groups = np.array(igroup, dtype=int)
+			groups = np.array(igroup, dtype=int).reshape(-1)
 
 
 		# fit
@@ -632,6 +630,7 @@ class SolarlikePeakbagging:
 			# split in subgroups
 			cdata, data = self._fit_prep(mode_freq, mode_l, 	
 							igroup=igroup, ifTestH1=ifTestH1,
+							priorGuess=priorGuess, initGuess=initGuess,
 							ifResolved=ifResolved, resolution=resolution,
 							ifSplit=ifSplit, inclination=inclination,
 							ifVaryLwPerMode=ifVaryLwPerMode, ifVaryFsPerMode=ifVaryFsPerMode, ifVaryAmpPerMode=ifVaryAmpPerMode,
@@ -640,7 +639,7 @@ class SolarlikePeakbagging:
 							fitType=fitType)
 
 			# fit in different subgroups to test H1 hypothesis (mode significance)
-			for tdata in data:	
+			for tdata in data: #[1:]:	
 				self._fit(cdata, tdata,
 				fitType=fitType,
 				priorsKwargs=priorsKwargs, likelihoodsKwargs=likelihoodsKwargs,
@@ -651,6 +650,7 @@ class SolarlikePeakbagging:
 
 	def _fit_prep(self, mode_freq, mode_l,
 		igroup=None, ifTestH1=False,
+		priorGuess=None, initGuess=None,
 		ifResolved=True, resolution=None,
 		ifSplit=False, inclination=None,
 		ifVaryLwPerMode=True, ifVaryFsPerMode=True, ifVaryAmpPerMode=True,
@@ -703,7 +703,6 @@ class SolarlikePeakbagging:
 		if not ifSplit: inclination = 0.
 
 		cdata.ifSplit = ifSplit
-		cdata.ifFreeInclination = ifFreeInclination
 		cdata.inclination = inclination
 
 
@@ -763,6 +762,8 @@ class SolarlikePeakbagging:
 		tdata.filepath = tfilepath
 		tdata.mode_freq = mode_freq
 		tdata.mode_l = mode_l
+		tdata.initGuess = initGuess
+		tdata.priorGuess = priorGuess
 		data.append(tdata)
 
 
@@ -777,6 +778,25 @@ class SolarlikePeakbagging:
 			idx[isubgroup-1] = False
 			tdata.mode_freq = mode_freq[idx]
 			tdata.mode_l = mode_l[idx]
+
+			if (initGuess is None) | (n_subgroups==1):
+				tdata.initGuess = None
+			else:
+				idx = np.ones(len(initGuess), dtype=bool)
+				idx[isubgroup-1]=False
+				tinitGuess = np.array(initGuess)[idx].tolist()
+				tdata.initGuess = tinitGuess
+
+			if (priorGuess is None) | (n_subgroups==1):
+				tdata.priorGuess = None
+			else:
+				idx = np.ones(len(priorGuess), dtype=bool)
+				idx[isubgroup-1]=False
+				tinitGuess = np.array(priorGuess)[idx].tolist()
+				tdata.priorGuess = tinitGuess
+
+
+
 			data.append(tdata)
 
 		return cdata, data
@@ -813,14 +833,15 @@ class SolarlikePeakbagging:
 		tpower = cdata.tpower
 		tpowers = cdata.tpowers
 
-		filepath = data.filepath
-		mode_freq = data.mode_freq
-		mode_l = data.mode_l
-
-		ifFreeInclination = cdata.ifFreeInclination
 		ifVaryLwPerMode = cdata.ifVaryLwPerMode
 		ifVaryFsPerMode = cdata.ifVaryFsPerMode
 		ifVaryAmpPerMode = cdata.ifVaryAmpPerMode
+
+		filepath = data.filepath
+		mode_freq = data.mode_freq
+		mode_l = data.mode_l
+		priorGuess = data.priorGuess
+		initGuess = data.initGuess
 
 		dnu = self.dnu
 
@@ -835,7 +856,7 @@ class SolarlikePeakbagging:
 				"lwPrior":"flat_prior","fsPrior":"flat_prior",
 				"fcPrior":"flat_prior","iPrior":"flat_prior",
 				"heightPrior":"flat_prior","bgPrior":"flat_prior"}
-		priors = Priors(fitParameters, **priorsKwargs)
+		priors = Priors(fitParameters, priorGuess=priorGuess, initGuess=initGuess, **priorsKwargs)
 		likelihoods = Likelihoods(fitParameters, fnyq, **likelihoodsKwargs)
 		posteriors = Posteriors(fitParameters, priors, likelihoods)
 

@@ -58,35 +58,32 @@ class FitModes:
 	def _plot_fit_results(self, freq, power, powers, tfreq, power_guess, power_fit,
 							mode_freq, mode_l, dnu, priorGuess):
 
-		fig, axes = self._return_2dmap_axes(mode_freq.shape[0])
+		numberOfSquareBlocks = mode_freq.shape[0] if mode_freq.shape[0] != 0 else 1
+		fig, axes = self._return_2dmap_axes(numberOfSquareBlocks)
 		color = ["blue", "red", "green", "purple"]
 		marker = ["o", "^", "s", "v"]
 
-		for i in range(mode_freq.shape[0]):
+		for i in range(numberOfSquareBlocks):
 			ax = axes[i]
 			ax.plot(freq, power, color="lightgray", label="power")
 			ax.plot(freq, powers, color="black", label="smooth")
 			ax.plot(freq, power_guess, color="blue", label="guess")
 			ax.plot(freq, power_fit, color="orange", label="fit")
 			# ax.legend()
-			a, b = mode_freq[i] - 0.2*dnu, mode_freq[i] + 0.2*dnu
-			idx = (freq > a) & (freq < b)
-			c, d = np.min(power[idx]), np.max(power[idx])
 
-			ax.scatter([mode_freq[i]],[c+(d-c)*0.8], c=color[mode_l[i]], marker=marker[mode_l[i]])
-			ax.errorbar([mode_freq[i]],[c+(d-c)*0.8], ecolor=color[mode_l[i]],
-				 xerr=[[np.abs(priorGuess[i]["fc"][0]-mode_freq[i])],
-				 [np.abs(priorGuess[i]["fc"][1]-mode_freq[i])]], capsize=5)
+			if mode_freq.shape[0] != 0:
+				a, b = mode_freq[i] - 0.2*dnu, mode_freq[i] + 0.2*dnu
+				idx = (freq > a) & (freq < b)
+				c, d = np.min(power[idx]), np.max(power[idx])
 
-			ax.axis([a, b, c, d])
-			ax.axvline(np.min(tfreq), linestyle="--", color="gray")
-			ax.axvline(np.max(tfreq), linestyle="--", color="gray")
+				ax.scatter([mode_freq[i]],[c+(d-c)*0.8], c=color[mode_l[i]], marker=marker[mode_l[i]])
+				ax.errorbar([mode_freq[i]],[c+(d-c)*0.8], ecolor=color[mode_l[i]],
+					 xerr=[[np.abs(priorGuess[i]["fc"][0]-mode_freq[i])],
+					 [np.abs(priorGuess[i]["fc"][1]-mode_freq[i])]], capsize=5)
 
-		if mode_freq.shape[0] == 0:
-			ax.plot(freq, power, color="lightgray", label="power")
-			ax.plot(freq, powers, color="black", label="smooth")
-			ax.plot(freq, power_guess, color="blue", label="guess")
-			ax.plot(freq, power_fit, color="orange", label="fit")		
+				ax.axis([a, b, c, d])
+				ax.axvline(np.min(tfreq), linestyle="--", color="gray")
+				ax.axvline(np.max(tfreq), linestyle="--", color="gray")		
 
 		for ax in axes[i+1:]:
 			fig.delaxes(ax)
@@ -130,7 +127,7 @@ class PTSampler(FitModes):
 
 		self.nburn=nburn
 		self.nsteps=nsteps
-		self.ntemp=ntemps
+		self.ntemps=ntemps
 		self.nwalkers=nwalkers
 		self.filepath=filepath
 		self.para_guess = np.concatenate(self.PriorsObj.init_guess)
@@ -158,7 +155,7 @@ class PTSampler(FitModes):
 		sampler.reset()
 
 		# actual iteration
-		print("start iterating. nsteps:", nsteps)
+		print("start iterating. nsteps:", self.nsteps)
 		for j, result in enumerate(sampler.sample(pos, iterations=self.nsteps, lnprob0=lnpost, lnlike0=lnlike)):
 			self._display_bar(j, self.nsteps)
 		sys.stdout.write("\n")
@@ -176,8 +173,8 @@ class PTSampler(FitModes):
 
 		# save evidence
 		self.evidence = sampler.thermodynamic_integration_log_evidence() 
-		print("Bayesian evidence lnZ: {:0.5f}".format(evidence[0]))
-		print("Bayesian evidence error dlnZ: {:0.5f}".format(evidence[1]))
+		print("Bayesian evidence lnZ: {:0.5f}".format(self.evidence[0]))
+		print("Bayesian evidence error dlnZ: {:0.5f}".format(self.evidence[1]))
 
 		# save estimation result
 		# 16, 50, 84 quantiles
@@ -391,7 +388,10 @@ class LSSampler(FitModes):
 
 	def run(self):
 		# maximize likelihood function by scipy.optimize.minimize function
-		minimizer_kwargs={"bounds":(np.concatenate(self.PriorsObj.prior_guess)).tolist()}
+		bounds = (np.concatenate([self.PriorsObj.prior_guess])).tolist()
+		# print(bounds)
+		# print(self.para_guess)
+		minimizer_kwargs={"bounds":bounds}
 		result = basinhopping(self.LikelihoodsObj.minus_lnlikelihood, self.para_guess, minimizer_kwargs=minimizer_kwargs)
 		para_fit = result.x
 		if self.FitParametersObj.ifFreeInclination: 

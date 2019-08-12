@@ -70,7 +70,7 @@ class FitParameters:
 		self.ifIncludeModes = ifIncludeModes
 		self.ifFreeInclination = ifFreeInclination
 
-		self.paraNames = np.concatenate([list(block.values()) for block in paraNamesInBlock])
+		self.paraNames = np.concatenate([list(block.values()) for block in self.paraNamesInBlock])
 		self.nParas = self.paraNames.shape[0]
 		
 		return
@@ -120,7 +120,7 @@ class Priors(FitParameters):
 			self.priorGuess = pg if priorGuess is None else priorGuess
 			self.initGuess = ig if initGuess is None else initGuess
 
-		self.prior_guess = [list(blocks.values()) for blocks in self.priorGuess]
+		self.prior_guess = [item  for blocks in self.priorGuess  for item in blocks.values()]
 		self.init_guess = [list(blocks.values()) for blocks in self.initGuess]
 
 		return
@@ -133,7 +133,7 @@ class Priors(FitParameters):
 			for imode in range(self.n_mode):
 				keys = self.paraNamesInBlock[imode].keys()
 				tmode_freq = self.mode_freq[imode]
-				self._guess_prior_initialize(tmode_freq)
+				self._guess_prior_initialize(mode_freq=tmode_freq)
 				prior, init = {}, {}
 				for key in keys:
 					if key == "amp":
@@ -154,7 +154,7 @@ class Priors(FitParameters):
 			keys = self.paraNamesInBlock[-1].keys()
 			tmode_freq = self.mode_freq[0]
 			# tmode_l = self.mode_l[0]
-			self._guess_prior_initialize(tmode_freq)
+			self._guess_prior_initialize(mode_freq=tmode_freq)
 			prior, init = {}, {}
 			for key in keys:
 				if key == "amp":
@@ -175,6 +175,7 @@ class Priors(FitParameters):
 			initGuess.append(init)	
 
 		else: 
+			self._guess_prior_initialize()
 			pr, ini = self._guess_prior_bg(self.bgPrior)
 			priorGuess = [{"bg":pr}]
 			initGuess = [{"bg":ini}]
@@ -184,30 +185,36 @@ class Priors(FitParameters):
 
 		return priorGuess, initGuess
 
-	def _guess_prior_initialize(self, mode_freq):
-		factor = 0.04
-		lmode_freq = self.mode_freq[self.mode_freq < mode_freq]
-		lmode_freq = lmode_freq.max() if lmode_freq.shape[0] != 0 else mode_freq-factor*self.dnu
+	def _guess_prior_initialize(self, mode_freq=None):
+		if not (mode_freq is None):
+			factor = 0.04
+			lmode_freq = self.mode_freq[self.mode_freq < mode_freq]
+			lmode_freq = lmode_freq.max() if lmode_freq.shape[0] != 0 else mode_freq-factor*self.dnu
 
-		umode_freq = self.mode_freq[self.mode_freq > mode_freq]
-		umode_freq = umode_freq.min() if umode_freq.shape[0] != 0 else mode_freq+factor*self.dnu		
+			umode_freq = self.mode_freq[self.mode_freq > mode_freq]
+			umode_freq = umode_freq.min() if umode_freq.shape[0] != 0 else mode_freq+factor*self.dnu		
 
-		lowerbound = max(lmode_freq, mode_freq-factor*self.dnu, np.min(self.freq))
-		upperbound = min(umode_freq, mode_freq+factor*self.dnu, np.max(self.freq))
+			lowerbound = max(lmode_freq, mode_freq-factor*self.dnu, np.min(self.freq))
+			upperbound = min(umode_freq, mode_freq+factor*self.dnu, np.max(self.freq))
 
-		idx = (self.freq >= lowerbound) & (self.freq <= upperbound)
-		tfreq, tpowers = self.freq[idx], self.powers[idx]
+			idx = (self.freq >= lowerbound) & (self.freq <= upperbound)
+			tfreq, tpowers = self.freq[idx], self.powers[idx]
 
-		height = np.max(tpowers)-1.0
-		height = height if height>0 else np.max(tpowers)
-		dfreq = np.median(tfreq[1:]-tfreq[:-1])
-		area = np.sum(tpowers*dfreq-1.0*dfreq)
-		lw = 2.0*area/height/np.pi if area>0 else 1.0
-		amp = (height*np.pi*lw)**0.5
+			height = np.max(tpowers)-1.0
+			height = height if height>0 else np.max(tpowers)
+			dfreq = np.median(tfreq[1:]-tfreq[:-1])
+			area = np.sum(tpowers*dfreq-1.0*dfreq)
+			lw = 2.0*area/height/np.pi if area>0 else 1.0
+			amp = (height*np.pi*lw)**0.5
 
-		self._height, self._amp, self._fc, self._lw = height, amp, mode_freq, lw
-		self._bg_min, self._bg_max = np.min(tpowers), np.max(tpowers)
-		self._lowerbound, self._upperbound = lowerbound, upperbound
+			self._height, self._amp, self._fc, self._lw = height, amp, mode_freq, lw
+			# self._bg_min, self._bg_max = np.min(tpowers), np.max(tpowers)
+			self._lowerbound, self._upperbound = lowerbound, upperbound
+
+		else:
+			self._bg_min, self._bg_max = np.min(self.powers), np.max(self.powers)
+			lowerbound, upperbound = np.min(self.freq), np.max(self.freq)
+			self._lowerbound, self._upperbound = lowerbound, upperbound
 
 		return lowerbound, upperbound
 
