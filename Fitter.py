@@ -180,9 +180,20 @@ class PTSampler(FitModes):
 		print("Bayesian evidence error dlnZ: {:0.5f}".format(evidence[1]))
 
 		# save estimation result
-		self.result = np.array(list(map(lambda v: (v[1], v[2]-v[1], v[1]-v[0]),
+		# 16, 50, 84 quantiles
+		result = np.array(list(map(lambda v: (v[1], v[2]-v[1], v[1]-v[0]),
 			zip(*np.percentile(samples, [16, 50, 84],axis=0)))))
-		self.para_fit = self.result[:,0]
+		self.para_fit = result[:,0]
+
+		# maximum
+		para_fitmax = np.zeros(self.ndim)
+		for ipara in range(self.ndim):
+			n, bins, _ = plt.hist(samples[:,ipara], bins=80)
+			idx = np.where(n == n.max())[0][0]
+			para_fitmax[ipara] = bins[idx:idx+1].mean()
+		self.para_fitmax = para_fitmax
+
+		self.result = np.concatenate([result, para_fitmax.reshape(self.ndim,1)], axis=1)
 
 		# save acceptance fraction
 		self.acceptance_fraction = np.array([np.mean(sampler.acceptance_fraction)])
@@ -196,19 +207,19 @@ class PTSampler(FitModes):
 		np.savetxt(self.filepath+st+"evidence.txt", self.evidence, delimiter=",", fmt=("%0.8f"), header="bayesian_evidence")
 
 		# save samples if the switch is toggled on
-		if self.ifOutputSamples: self.samples.save(filepath+"samples.npy")
+		if self.ifOutputSamples: np.save(self.filepath+st+"samples.npy", self.samples)
 
 		# save guessed parameters
 		np.savetxt(self.filepath+st+"guess.txt", self.para_guess, delimiter=",", fmt=("%0.8f"), header="para_guess")
 
 		# plot triangle and save
 		para_names = self.FitParametersObj.paraNames
-		fig = corner.corner(self.samples, labels=para_names, quantiles=(0.16, 0.5, 0.84), truths=self.para_guess)
+		fig = corner.corner(self.samples, labels=para_names, quantiles=(0.16, 0.5, 0.84), truths=self.para_fitmax)
 		fig.savefig(self.filepath+st+"triangle.png")
 		plt.close()
 
 		# save estimation result
-		np.savetxt(self.filepath+st+"summary.txt", self.result, delimiter=",", fmt=("%0.8f", "%0.8f", "%0.8f"), header="parameter, upper uncertainty, lower uncertainty")
+		np.savetxt(self.filepath+st+"summary.txt", self.result, delimiter=",", fmt=("%0.8f", "%0.8f", "%0.8f", "%0.8f"), header="50th quantile, 16th quantile sigma, 84th quantile sigma, maximum")
 
 		# save mean acceptance rate
 		np.savetxt(self.filepath+st+"acceptance_fraction.txt", self.acceptance_fraction, delimiter=",", fmt=("%0.8f"), header="acceptance_fraction")
@@ -223,9 +234,15 @@ class PTSampler(FitModes):
 		power_guess = self.LikelihoodsObj.model(self.para_guess, x=self.freq)
 		fig = self._plot_fit_results(self.freq, self.power, self.powers, self.FitParametersObj.freq, power_guess, power_fit,
 							self.FitParametersObj.mode_freq, self.FitParametersObj.mode_l, self.FitParametersObj.dnu, 
-							self.FitParametersObj.n_mode, self.FitParametersObj.n_mode_l0,
 							self.PriorsObj.priorGuess)
-		plt.savefig(self.filepath+st+"fit.png")
+		plt.savefig(self.filepath+st+"fitmedian.png")
+		plt.close()
+
+		power_fitmax = self.LikelihoodsObj.model(self.para_fitmax, x=self.freq)
+		fig = self._plot_fit_results(self.freq, self.power, self.powers, self.FitParametersObj.freq, power_guess, power_fitmax,
+							self.FitParametersObj.mode_freq, self.FitParametersObj.mode_l, self.FitParametersObj.dnu, 
+							self.PriorsObj.priorGuess)
+		plt.savefig(self.filepath+st+"fitmax.png")
 		plt.close()
 
 		return
@@ -290,9 +307,20 @@ class ESSampler(FitModes):
 		self.samples = samples
 
 		# save estimation result
-		self.result = np.array(list(map(lambda v: (v[1], v[2]-v[1], v[1]-v[0]),
+		# 16, 50, 84 quantiles
+		result = np.array(list(map(lambda v: (v[1], v[2]-v[1], v[1]-v[0]),
 			zip(*np.percentile(samples, [16, 50, 84],axis=0)))))
-		self.para_fit = self.result[:,0]
+		self.para_fit = result[:,0]
+
+		# maximum
+		para_fitmax = np.zeros(self.ndim)
+		for ipara in range(self.ndim):
+			n, bins, _ = plt.hist(samples[:,ipara], bins=80)
+			idx = np.where(n == n.max())[0][0]
+			para_fitmax[ipara] = bins[idx:idx+1].mean()
+		self.para_fitmax = para_fitmax
+
+		self.result = np.concatenate([result, para_fitmax.reshape(self.ndim,1)], axis=1)
 
 		# save acceptance fraction
 		self.acceptance_fraction = np.array([np.mean(sampler.acceptance_fraction)])
@@ -304,19 +332,19 @@ class ESSampler(FitModes):
 		st = "ES"
 
 		# save samples if the switch is toggled on
-		if self.ifOutputSamples: self.samples.save(filepath+"samples.npy")
+		if self.ifOutputSamples: np.save(self.filepath+st+"samples.npy", self.samples)
 
 		# save guessed parameters
 		np.savetxt(self.filepath+st+"guess.txt", self.para_guess, delimiter=",", fmt=("%0.8f"), header="para_guess")
 
 		# plot triangle and save
 		para_names = self.FitParametersObj.paraNames
-		fig = corner.corner(self.samples, labels=para_names, quantiles=(0.16, 0.5, 0.84), truths=self.para_guess)
+		fig = corner.corner(self.samples, labels=para_names, quantiles=(0.16, 0.5, 0.84), truths=self.para_fitmax)
 		fig.savefig(self.filepath+st+"triangle.png")
 		plt.close()
 
 		# save estimation result
-		np.savetxt(self.filepath+st+"summary.txt", self.result, delimiter=",", fmt=("%0.8f", "%0.8f", "%0.8f"), header="parameter, upper uncertainty, lower uncertainty")
+		np.savetxt(self.filepath+st+"summary.txt", self.result, delimiter=",", fmt=("%0.8f", "%0.8f", "%0.8f", "%0.8f"), header="50th quantile, 16th quantile sigma, 84th quantile sigma, maximum")
 
 		# save mean acceptance rate
 		np.savetxt(self.filepath+st+"acceptance_fraction.txt", self.acceptance_fraction, delimiter=",", fmt=("%0.8f"), header="acceptance_fraction")
@@ -332,7 +360,14 @@ class ESSampler(FitModes):
 		fig = self._plot_fit_results(self.freq, self.power, self.powers, self.FitParametersObj.freq, power_guess, power_fit,
 							self.FitParametersObj.mode_freq, self.FitParametersObj.mode_l, self.FitParametersObj.dnu, 
 							self.PriorsObj.priorGuess)
-		plt.savefig(self.filepath+st+"fit.png")
+		plt.savefig(self.filepath+st+"fitmedian.png")
+		plt.close()
+
+		power_fitmax = self.LikelihoodsObj.model(self.para_fitmax, x=self.freq)
+		fig = self._plot_fit_results(self.freq, self.power, self.powers, self.FitParametersObj.freq, power_guess, power_fitmax,
+							self.FitParametersObj.mode_freq, self.FitParametersObj.mode_l, self.FitParametersObj.dnu, 
+							self.PriorsObj.priorGuess)
+		plt.savefig(self.filepath+st+"fitmax.png")
 		plt.close()
 
 		return

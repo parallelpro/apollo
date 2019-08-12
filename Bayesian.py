@@ -70,7 +70,7 @@ class FitParameters:
 		self.ifIncludeModes = ifIncludeModes
 		self.ifFreeInclination = ifFreeInclination
 
-		self.paraNames = np.concatenate([list(block.keys()) for block in paraNamesInBlock])
+		self.paraNames = np.concatenate([list(block.values()) for block in paraNamesInBlock])
 		self.nParas = self.paraNames.shape[0]
 		
 		return
