@@ -231,9 +231,9 @@ class Priors(FitParameters):
 
 	def _guess_prior_fs(self, fsPrior):
 		if fsPrior == "flat_prior":
-			return [0., 2.], 0.1
+			return [0., .5], 0.1
 		elif fsPrior == "flat_plus_gaussian_decaying_wing_prior":
-			return [0., 2., 1.], 0.1
+			return [0., .5, 0.5], 0.1
 
 	def _guess_prior_i(self, iPrior):
 		if iPrior == "flat_prior":

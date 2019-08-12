@@ -556,7 +556,7 @@ class SolarlikePeakbagging:
 		ifVaryLwPerMode=True, ifVaryFsPerMode=True, ifVaryAmpPerMode=True,
 		trimLowerLimitInDnu=None,
 		trimUpperLimitInDnu=None,
-		fitType="LeastSquare", nsteps=None, ifOutputSamples=False,
+		fitType="LeastSquare",
 		priorsKwargs={}, likelihoodsKwargs={}, samplerKwargs={}):
 
 		"""
@@ -642,7 +642,7 @@ class SolarlikePeakbagging:
 			# fit in different subgroups to test H1 hypothesis (mode significance)
 			for tdata in data:	
 				self._fit(cdata, tdata,
-				fitType=fitType, nsteps=nsteps, ifOutputSamples=ifOutputSamples,
+				fitType=fitType,
 				priorsKwargs=priorsKwargs, likelihoodsKwargs=likelihoodsKwargs,
 				samplerKwargs=samplerKwargs)
 
@@ -784,7 +784,7 @@ class SolarlikePeakbagging:
 
 
 	def _fit(self, cdata, data,  
-		fitType="ParallelTempering", nsteps=None, ifOutputSamples=False,
+		fitType="ParallelTempering",
 		priorsKwargs={}, likelihoodsKwargs={}, samplerKwargs={}):
 
 		"""
