@@ -853,9 +853,9 @@ class SolarlikePeakbagging:
 				ifVaryAmpPerMode=ifVaryAmpPerMode)
 
 		if fitType=="LeastSquare": priorsKwargs={"ampPrior":"flat_prior",
-				"lwPrior":"flat_prior","fsPrior":"flat_prior",
-				"fcPrior":"flat_prior","iPrior":"flat_prior",
-				"heightPrior":"flat_prior","bgPrior":"flat_prior"}
+				"lwPrior":"flat_prior", "fsPrior":"flat_prior",
+				"fcPrior":"flat_prior", "iPrior":"flat_prior",
+				"heightPrior":"flat_prior", "bgPrior":"flat_prior"}
 		priors = Priors(fitParameters, priorGuess=priorGuess, initGuess=initGuess, **priorsKwargs)
 		likelihoods = Likelihoods(fitParameters, fnyq, **likelihoodsKwargs)
 		posteriors = Posteriors(fitParameters, priors, likelihoods)
@@ -875,9 +875,214 @@ class SolarlikePeakbagging:
 
 		return
 
-	def summarize_peakbagging():
+
+	def summarize(self, fitType="LeastSquare",
+		ifTestH1=False,
+		ifResolved=True, resolution=None,
+		ifSplit=False, inclination=None,
+		ifVaryLwPerMode=True, ifVaryFsPerMode=True, ifVaryAmpPerMode=True):
 		"""
 		Docstring
 		"""
-		pass
+
+		# check
+		if not fitType in ["Ensemble", "ParallelTempering", "LeastSquare"]:
+			raise ValueError("fittype should be one of ['Ensemble', 'LeastSquare']")
+
+		# specify output directory
+		filepath = self._outputdir+self._sep
+
+		#
+		groups = np.unique(self.modeInputTable["igroup"])
+
+		# create lists to store results
+		if fitType == "ParallelTempering":
+			keys = ["igroup", "l", "mode_id", "PTamp_med", "PTamp_lc", "PTamp_uc", "PTamp_max", 
+					"PTlw_med", "PTlw_lc", "PTlw_uc", "PTlw_max", 
+					"PTfs_med", "PTfs_lc", "PTfs_uc", "PTfs_max", 
+					"PTfc_med", "PTfc_lc", "PTfc_uc", "PTfc_max", 
+					"PTlnK", "PTlnK_err"]
+			fmt = ["%d", "%d", "%d", "%10.4f", "%10.4f", "%10.4f", "%10.4f", 
+					"%10.4f", "%10.4f", "%10.4f", "%10.4f", 
+					"%10.4f", "%10.4f", "%10.4f", "%10.4f", 
+					"%10.4f", "%10.4f", "%10.4f", "%10.4f",
+					"%10.4f", "%10.4f"]
+		if fitType == "Ensemble":
+			keys = ["igroup", "l", "mode_id", "ESamp_med", "ESamp_lc", "ESamp_uc", "ESamp_max", 
+					"ESlw_med", "ESlw_lc", "ESlw_uc", "ESlw_max", 
+					"ESfs_med", "ESfs_lc", "ESfs_uc", "ESfs_max",
+					"ESfc_med", "ESfc_lc", "ESfc_uc", "ESfc_max"]
+			fmt = ["%d", "%d", "%d", "%10.4f", "%10.4f", "%10.4f", "%10.4f", 
+					"%10.4f", "%10.4f", "%10.4f", "%10.4f", 
+					"%10.4f", "%10.4f", "%10.4f", "%10.4f",
+					"%10.4f", "%10.4f", "%10.4f", "%10.4f"]
+		if fitType == "LeastSquare":
+			keys = ["igroup", "l", "mode_id", "LSamp_max", "LSlw_max", "LSfs_max", "LSfc_max"]
+			fmt = ["%d", "%d", "%d", "%10.4f", "%10.4f", "%10.4f", "%10.4f"]
+
+		modeOutputTable = []
+
+		# store pkbg results
+		for igroup in groups:
+			tfilepath = filepath + "pkbg" + self._sep + str(int(igroup)) + self._sep
+
+			mode_l = self.modeInputTable["mode_l"][self.modeInputTable["igroup"]==igroup]
+			mode_id = self.modeInputTable["mode_id"][self.modeInputTable["igroup"]==igroup]
+
+			nmodes = mode_l.shape[0]
+
+			tmodeOutputTable = np.zeros(nmodes, dtype=[(keys[ikey], "float") for ikey in range(len(keys))] )
+			tmodeOutputTable["l"] = mode_l
+			tmodeOutputTable["mode_id"] = mode_id
+			tmodeOutputTable["igroup"] = igroup
+
+			fitParameters = FitParameters(0, mode_l, 0, 0, 0, 0,
+					ifSplit=ifSplit, inclination=inclination, 
+					ifResolved=ifResolved, resolution=resolution,
+					ifVaryLwPerMode=ifVaryLwPerMode,
+					ifVaryFsPerMode=ifVaryFsPerMode,
+					ifVaryAmpPerMode=ifVaryAmpPerMode)
+
+			paraNamesInBlock = fitParameters.paraNamesInBlock
+
+			if fitType == "ParallelTempering":
+				res = np.loadtxt(tfilepath+"0"+self._sep+"PTsummary.txt", delimiter=",", ndmin=2)
+
+				# mode paras
+				itheta = 0
+				for imode, paraNamesDict in enumerate(paraNamesInBlock[0:nmodes]):
+					for paraType in paraNamesDict.keys():
+						if paraType == "amp":
+							tmodeOutputTable["PTamp_med"][imode] = res[itheta,0]
+							tmodeOutputTable["PTamp_lc"][imode] = res[itheta,1]
+							tmodeOutputTable["PTamp_uc"][imode] = res[itheta,2]
+							tmodeOutputTable["PTamp_max"][imode] = res[itheta,3]
+						elif paraType == "lw":
+							tmodeOutputTable["PTlw_med"][imode] = res[itheta,0]
+							tmodeOutputTable["PTlw_lc"][imode] = res[itheta,1]
+							tmodeOutputTable["PTlw_uc"][imode] = res[itheta,2]
+							tmodeOutputTable["PTlw_max"][imode] = res[itheta,3]
+						elif paraType == "fs":
+							tmodeOutputTable["PTfs_med"][imode] = res[itheta,0]
+							tmodeOutputTable["PTfs_lc"][imode] = res[itheta,1]
+							tmodeOutputTable["PTfs_uc"][imode] = res[itheta,2]
+							tmodeOutputTable["PTfs_max"][imode] = res[itheta,3]
+						elif paraType == "fc":
+							tmodeOutputTable["PTfc_med"][imode] = res[itheta,0]
+							tmodeOutputTable["PTfc_lc"][imode] = res[itheta,1]
+							tmodeOutputTable["PTfc_uc"][imode] = res[itheta,2]
+							tmodeOutputTable["PTfc_max"][imode] = res[itheta,3]
+						itheta += 1
+
+				# common paras
+				for paraType in paraNamesInBlock[-1].keys():
+					if paraType == "amp":
+						tmodeOutputTable["PTamp_med"][:] = res[itheta,0]
+						tmodeOutputTable["PTamp_lc"][:] = res[itheta,1]
+						tmodeOutputTable["PTamp_uc"][:] = res[itheta,2]
+						tmodeOutputTable["PTamp_max"][:] = res[itheta,3]
+					elif paraType == "lw":
+						tmodeOutputTable["PTlw_med"][:] = res[itheta,0]
+						tmodeOutputTable["PTlw_lc"][:] = res[itheta,1]
+						tmodeOutputTable["PTlw_uc"][:] = res[itheta,2]
+						tmodeOutputTable["PTlw_max"][:] = res[itheta,3]
+					elif paraType == "fs":
+						tmodeOutputTable["PTfs_med"][:] = res[itheta,0]
+						tmodeOutputTable["PTfs_lc"][:] = res[itheta,1]
+						tmodeOutputTable["PTfs_uc"][:] = res[itheta,2]
+						tmodeOutputTable["PTfs_max"][:] = res[itheta,3]
+					theta += 1
+
+				if ifTestH1: 
+					lnE0, lnE0_err = np.loadtxt(tfilepath+"0"+self._sep+"PTevidence.txt")
+					for imode in range(nmodes):
+						lnE1, lnE1_err = np.loadtxt(tfilepath+str(imode+1)+self._sep+"PTevidence.txt")
+						lnK = lnE0 - lnE1
+						lnK_err = (lnE0_err**2.0 + lnE1_err**2.0)**0.5
+						tmodeOutputTable["PTlnK"][imode] = lnK
+						tmodeOutputTable["PTlnK_err"][imode] = lnK_err
+
+			if fitType == "Ensemble":
+				res = np.loadtxt(tfilepath+"0"+self._sep+"ESsummary.txt", delimiter=",", ndmin=2)
+
+				# mode paras
+				itheta = 0
+				for imode, paraNamesDict in enumerate(paraNamesInBlock[0:nmodes]):
+					for paraType in paraNamesDict.keys():
+						if paraType == "amp":
+							tmodeOutputTable["ESamp_med"][imode] = res[itheta,0]
+							tmodeOutputTable["ESamp_lc"][imode] = res[itheta,1]
+							tmodeOutputTable["ESamp_uc"][imode] = res[itheta,2]
+							tmodeOutputTable["ESamp_max"][imode] = res[itheta,3]
+						elif paraType == "lw":
+							tmodeOutputTable["ESlw_med"][imode] = res[itheta,0]
+							tmodeOutputTable["ESlw_lc"][imode] = res[itheta,1]
+							tmodeOutputTable["ESlw_uc"][imode] = res[itheta,2]
+							tmodeOutputTable["ESlw_max"][imode] = res[itheta,3]
+						elif paraType == "fs":
+							tmodeOutputTable["ESfs_med"][imode] = res[itheta,0]
+							tmodeOutputTable["ESfs_lc"][imode] = res[itheta,1]
+							tmodeOutputTable["ESfs_uc"][imode] = res[itheta,2]
+							tmodeOutputTable["ESfs_max"][imode] = res[itheta,3]
+						elif paraType == "fc":
+							tmodeOutputTable["ESfc_med"][imode] = res[itheta,0]
+							tmodeOutputTable["ESfc_lc"][imode] = res[itheta,1]
+							tmodeOutputTable["ESfc_uc"][imode] = res[itheta,2]
+							tmodeOutputTable["ESfc_max"][imode] = res[itheta,3]
+						itheta += 1
+
+				# common paras
+				for paraType in paraNamesInBlock[-1].keys():
+					if paraType == "amp":
+						tmodeOutputTable["ESamp_med"][:] = res[itheta,0]
+						tmodeOutputTable["ESamp_lc"][:] = res[itheta,1]
+						tmodeOutputTable["ESamp_uc"][:] = res[itheta,2]
+						tmodeOutputTable["ESamp_max"][:] = res[itheta,3]
+					elif paraType == "lw":
+						tmodeOutputTable["ESlw_med"][:] = res[itheta,0]
+						tmodeOutputTable["ESlw_lc"][:] = res[itheta,1]
+						tmodeOutputTable["ESlw_uc"][:] = res[itheta,2]
+						tmodeOutputTable["ESlw_max"][:] = res[itheta,3]
+					elif paraType == "fs":
+						tmodeOutputTable["ESfs_med"][:] = res[itheta,0]
+						tmodeOutputTable["ESfs_lc"][:] = res[itheta,1]
+						tmodeOutputTable["ESfs_uc"][:] = res[itheta,2]
+						tmodeOutputTable["ESfs_max"][:] = res[itheta,3]
+					theta += 1
+
+			if fitType == "LeastSquare":
+				res = np.loadtxt(tfilepath+"0"+self._sep+"ESsummary.txt", delimiter=",", ndmin=2)
+
+				# mode paras
+				itheta = 0
+				for imode, paraNamesDict in enumerate(paraNamesInBlock[0:nmodes]):
+					for paraType in paraNamesDict.keys():
+						if paraType == "amp":
+							tmodeOutputTable["LSamp_max"][imode] = res[itheta,3]
+						elif paraType == "lw":
+							tmodeOutputTable["LSlw_max"][imode] = res[itheta,3]
+						elif paraType == "fs":
+							tmodeOutputTable["LSfs_max"][imode] = res[itheta,3]
+						elif paraType == "fc":
+							tmodeOutputTable["LSfc_max"][imode] = res[itheta,3]
+						itheta += 1
+
+				# common paras
+				for paraType in paraNamesInBlock[-1].keys():
+					if paraType == "amp":
+						tmodeOutputTable["LSamp_max"][:] = res[itheta,3]
+					elif paraType == "lw":
+						tmodeOutputTable["LSlw_max"][:] = res[itheta,3]
+					elif paraType == "fs":
+						tmodeOutputTable["LSfs_max"][:] = res[itheta,3]
+					theta += 1
+
+			modeOutputTable.append(tmodeOutputTable)
+
+		self.modeOutputTable = np.concatenate(modeOutputTable)
+
+		# save table
+		np.savetxt(filepath+"frequencySummary.csv", self.modeOutputTable, delimiter=",", fmt=fmt, header=", ".join(keys))
+
+		return
 
