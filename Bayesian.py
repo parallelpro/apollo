@@ -188,7 +188,7 @@ class Priors(FitParameters):
 
 	def _guess_prior_initialize(self, mode_freq=None):
 		if not (mode_freq is None):
-			factor = 0.04
+			factor = 0.05
 			lmode_freq = self.mode_freq[self.mode_freq < mode_freq]
 			lmode_freq = lmode_freq.max() if lmode_freq.shape[0] != 0 else mode_freq-factor*self.dnu
 

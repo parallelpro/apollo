@@ -395,7 +395,7 @@ class SolarlikePeakbagging:
 
 		return
 
-	def set_modeid_fromfile(self, inputfile=None):
+	def set_modeid_fromfile(self, inputfile=None, ifpeakbagging=None,):
 		"""
 		Docstring
 		"""
@@ -409,7 +409,14 @@ class SolarlikePeakbagging:
 				("mode_freq", "float")]
 		arraylist = np.genfromtxt(inputfile, 
 			delimiter=",", skip_header=1, dtype=dtype)
-		self.modeInputTable = arraylist[arraylist["ifpeakbagging"]==1]
+
+		# ifpeakbagging
+		if ifpeakbagging is None:
+			arraylist = arraylist[arraylist["ifpeakbagging"]>=1]
+		else:
+			arraylist = arraylist[arraylist["ifpeakbagging"]==ifpeakbagging]
+
+		self.modeInputTable = arraylist
 		return
 
 
