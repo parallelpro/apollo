@@ -10,6 +10,9 @@ import emcee
 import corner
 import sys 
 
+# under development / improvement:
+# 1. use smart ways to output data
+# 2. add support for fixing or constraining relative fcs/amps/lws/fss/...
 
 __all__ = ["FitModes", "PTSampler", "ESSampler", "LSSampler"]
 

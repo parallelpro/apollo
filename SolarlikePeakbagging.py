@@ -890,6 +890,9 @@ class SolarlikePeakbagging:
 		ifVaryLwPerMode=True, ifVaryFsPerMode=True, ifVaryAmpPerMode=True):
 		"""
 		Docstring
+
+		Improve:
+		1. use smart ways to include all data.
 		"""
 
 		# check
