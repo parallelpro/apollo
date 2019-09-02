@@ -282,6 +282,7 @@ class Priors(FitParameters):
 		lnprior = 0.
 		itheta = 0
 
+		fc_theta_list = np.zeros(self.n_mode)
 		for iblock, block in enumerate(self.priorGuess):
 			for key in block:
 				params = (theta[itheta],) + tuple(block[key])
@@ -293,6 +294,7 @@ class Priors(FitParameters):
 					lnprior += getattr(self, self.fsPrior)(*params)
 				elif key == "fc":
 					lnprior += getattr(self, self.fcPrior)(*params)
+					fc_theta_list[iblock] = theta[itheta]
 				elif key == "height":
 					lnprior += getattr(self, self.heightPrior)(*params)
 				elif key == "i":
@@ -300,7 +302,14 @@ class Priors(FitParameters):
 				elif key == "bg":
 					lnprior += getattr(self, self.bgPrior)(*params)
 				itheta += 1
-			
+
+		# constraint: frequency must be in order as input
+		# improve here: does not need to iterate every time - only when necessary
+		idx = np.argsort(self.mode_freq)
+		fc_theta_list = fc_theta_list[idx]
+		if not ((fc_theta_list[1:]-fc_theta_list[:-1])>0).all():
+			return -np.inf
+
 		return lnprior
 
 
