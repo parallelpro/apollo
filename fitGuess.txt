@@ -1,0 +1,29 @@
+# mode_l, mode_freq, mode_id
+###
+mode_group, 0
+ifpeakbagging, 1
+nmode, 2
+0, 343.3434, 0
+1, 232.4343, 1
+
+###
+mode_group, 1
+ifpeakbagging, 2
+nmode, 2
+0, 1003.3450, 2
+2, 1045.2220, 3
+
+###
+mode_group, 0
+ifpeakbagging, 1
+nmode, 2
+0, 343.3434, 0
+1, 232.4343, 1
+
+###
+mode_group, 1
+ifpeakbagging, 2
+nmode, 2
+0, 1003.3450, 2
+2, 1045.2220, 3
+
