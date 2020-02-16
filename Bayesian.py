@@ -248,6 +248,8 @@ class Priors(FitParameters):
 			return [-np.pi/2.0, np.pi], np.pi/2.0
 		elif iPrior == "flat_plus_gaussian_decaying_wing_prior":
 			assert False, "inclination is not compatible with prior ``flat_plus_gaussian_decaying_wing_prior''. "
+		elif iPrior == "isotropic_prior":
+			return [], np.pi/2.0
 
 	def _guess_prior_height(self, heightPrior):
 		if heightPrior == "flat_prior":
@@ -277,6 +279,12 @@ class Priors(FitParameters):
 			else:
 				lnprior = np.log(height) - (theta-flatEnd)**2.0/(2*gaussianSigma**2.0)
 			return lnprior
+	
+	def isotropic_prior(self, theta):
+		if not -np.pi/2.0 <= theta <= np.pi/2.0:
+			return -np.inf
+		else:
+			return np.log(np.abs(np.sin(theta))/3.0)
 
 	def lnprior(self, theta):
 		lnprior = 0.
