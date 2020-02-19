@@ -224,12 +224,17 @@ class Priors(FitParameters):
 			return [self._amp*0.2, self._amp*5.0], self._amp
 		elif ampPrior == "flat_plus_gaussian_decaying_wing_prior":
 			return [self._amp*0.2, self._amp*5.0, self._amp], self._amp
+		elif ampPrior == "jeffreys_prior":
+			return [self._amp*0.2, self._amp*5.0], self._amp
 
 	def _guess_prior_lw(self, lwPrior):
 		if lwPrior == "flat_prior":
 			return [self._lw*0.2, self._lw*5.0], self._lw
 		elif lwPrior == "flat_plus_gaussian_decaying_wing_prior":
 			return [self._lw*0.2, self._lw*5.0, self._lw], self._lw
+		elif lwPrior == "jeffreys_prior":
+			return [self._lw*0.2, self._lw*5.0], self._lw
+
 
 	def _guess_prior_fc(self, fcPrior):
 		if fcPrior == "flat_prior":
@@ -285,6 +290,19 @@ class Priors(FitParameters):
 			return -np.inf
 		else:
 			return np.log(np.abs(np.sin(theta))/3.0)
+
+	def jeffreys_prior(self, theta, xmin, xmax):
+		if not xmin <= theta <= xmax:
+			return -np.inf
+		else:
+			return -np.log((theta*np.log(xmax/xmin)))
+
+	def modified_jeffreys_prior(self, theta, xuni, xmax):
+		if not 0. < theta <= xmax:
+			return -np.inf
+		else:
+			return -np.log((theta+xuni)*(np.log((xuni+xmax)/xuni)))
+
 
 	def lnprior(self, theta):
 		lnprior = 0.
