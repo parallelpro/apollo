@@ -227,7 +227,7 @@ class Priors(FitParameters):
 		elif ampPrior == "jeffreys_prior":
 			return [self._amp*0.2, self._amp*5.0], self._amp
 		elif ampPrior == "modified_jeffreys_prior":
-			return [self._amp*0.02, self._amp*20.0], self._amp
+			return [self._amp*0.02, self._amp*5.0], self._amp
 
 
 	def _guess_prior_lw(self, lwPrior):
@@ -238,7 +238,7 @@ class Priors(FitParameters):
 		elif lwPrior == "jeffreys_prior":
 			return [self._lw*0.2, self._lw*5.0], self._lw
 		elif lwPrior == "modified_jeffreys_prior":
-			return [self._lw*0.02, self._lw*20.0], self._lw
+			return [self._lw*0.02, self._lw*5.0], self._lw
 
 
 	def _guess_prior_fc(self, fcPrior):
