@@ -159,7 +159,7 @@ class PTSampler(FitModes):
 
 		# actual iteration
 		print("start iterating. nsteps:", self.nsteps)
-		for j, result in enumerate(sampler.sample(pos, iterations=self.nsteps, lnprob0=lnpost, lnlike0=lnlike)):
+		for j, result in enumerate(sampler.sample(pos, iterations=self.nsteps)):#, lnprob0=lnpost, lnlike0=lnlike
 			self._display_bar(j, self.nsteps)
 		sys.stdout.write("\n")
 
@@ -229,21 +229,21 @@ class PTSampler(FitModes):
 		plt.savefig(self.filepath+st+'traces.png')
 		plt.close()
 
-		# plot fitting results and save
-		power_fit = self.LikelihoodsObj.model(self.para_fit, x=self.freq)
-		power_guess = self.LikelihoodsObj.model(self.para_guess, x=self.freq)
-		fig = self._plot_fit_results(self.freq, self.power, self.powers, self.FitParametersObj.freq, power_guess, power_fit,
-							self.FitParametersObj.mode_freq, self.FitParametersObj.mode_l, self.FitParametersObj.dnu, 
-							self.PriorsObj.priorGuess)
-		plt.savefig(self.filepath+st+"fitmedian.png")
-		plt.close()
+		# # plot fitting results and save
+		# power_fit = self.LikelihoodsObj.model(self.para_fit, x=self.freq)
+		# power_guess = self.LikelihoodsObj.model(self.para_guess, x=self.freq)
+		# fig = self._plot_fit_results(self.freq, self.power, self.powers, self.FitParametersObj.freq, power_guess, power_fit,
+		# 					self.FitParametersObj.mode_freq, self.FitParametersObj.mode_l, self.FitParametersObj.dnu, 
+		# 					self.PriorsObj.priorGuess)
+		# plt.savefig(self.filepath+st+"fitmedian.png")
+		# plt.close()
 
-		power_fitmax = self.LikelihoodsObj.model(self.para_fitmax, x=self.freq)
-		fig = self._plot_fit_results(self.freq, self.power, self.powers, self.FitParametersObj.freq, power_guess, power_fitmax,
-							self.FitParametersObj.mode_freq, self.FitParametersObj.mode_l, self.FitParametersObj.dnu, 
-							self.PriorsObj.priorGuess)
-		plt.savefig(self.filepath+st+"fitmax.png")
-		plt.close()
+		# power_fitmax = self.LikelihoodsObj.model(self.para_fitmax, x=self.freq)
+		# fig = self._plot_fit_results(self.freq, self.power, self.powers, self.FitParametersObj.freq, power_guess, power_fitmax,
+		# 					self.FitParametersObj.mode_freq, self.FitParametersObj.mode_l, self.FitParametersObj.dnu, 
+		# 					self.PriorsObj.priorGuess)
+		# plt.savefig(self.filepath+st+"fitmax.png")
+		# plt.close()
 
 		return
 
@@ -291,7 +291,7 @@ class ESSampler(FitModes):
 
 		# actual iteration
 		print("start iterating. nsteps:", self.nsteps)
-		for j, result in enumerate(sampler.sample(pos, iterations=self.nsteps, lnprob0=lnpost)):
+		for j, result in enumerate(sampler.sample(pos, iterations=self.nsteps)):#, lnprob0=lnpost
 			self._display_bar(j, self.nsteps)
 		sys.stdout.write("\n")
 

@@ -43,6 +43,7 @@ class FitParameters:
 					paras["fc"] = "fc"+simode
 					paraNamesInBlock[imode] = paras
 				else:
+					paras = {}
 					if ifVaryAmpPerMode:
 						paras["height"] = "height"+simode
 					paras["fc"] = "fc"+simode
@@ -79,8 +80,8 @@ class FitParameters:
 class Priors(FitParameters):
 	def __init__(self, FitParametersObj,
 				priorGuess=None, initGuess=None,
-				ampPrior="flat_prior",
-				lwPrior="flat_prior",
+				ampPrior="modified_jeffreys_prior",
+				lwPrior="modified_jeffreys_prior",
 				fsPrior="flat_plus_gaussian_decaying_wing_prior",
 				fcPrior="flat_prior",
 				iPrior="flat_prior",
@@ -227,7 +228,7 @@ class Priors(FitParameters):
 		elif ampPrior == "jeffreys_prior":
 			return [self._amp*0.2, self._amp*5.0], self._amp
 		elif ampPrior == "modified_jeffreys_prior":
-			return [self._amp*0.02, self._amp*5.0], self._amp
+			return [self._amp*0.01, self._amp*5.0], self._amp
 
 
 	def _guess_prior_lw(self, lwPrior):
@@ -238,7 +239,7 @@ class Priors(FitParameters):
 		elif lwPrior == "jeffreys_prior":
 			return [self._lw*0.2, self._lw*5.0], self._lw
 		elif lwPrior == "modified_jeffreys_prior":
-			return [self._lw*0.02, self._lw*5.0], self._lw
+			return [self._lw*0.01, self._lw*5.0], self._lw
 
 
 	def _guess_prior_fc(self, fcPrior):
@@ -249,9 +250,9 @@ class Priors(FitParameters):
 
 	def _guess_prior_fs(self, fsPrior):
 		if fsPrior == "flat_prior":
-			return [0., .5], 0.1
+			return [0., 1.0], 0.1
 		elif fsPrior == "flat_plus_gaussian_decaying_wing_prior":
-			return [0., .5, 0.5], 0.1
+			return [0., 1.0, 0.5], 0.1
 
 	def _guess_prior_i(self, iPrior):
 		if iPrior == "flat_prior":

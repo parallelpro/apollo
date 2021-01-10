@@ -29,9 +29,9 @@ def lorentzian_splitting_model(freq, modelParameters, fnyq, mode_l):
 		power += visibility_m1 * height/(1.0 + (4.0*(freq-centralFrequency-splittingFrequency)**2.0/(linewidth**2.0)))
 		power += visibility_m1 * height/(1.0 + (4.0*(freq-centralFrequency+splittingFrequency)**2.0/(linewidth**2.0)))
 	if mode_l == 2:
-		visibility_m0 = (3.0*np.cos(inclination)**2.0-1)**2.0*0.25;
-		visibility_m1 = np.sin(inclination*2.0)**2.0*3.0/8.0;
-		visibility_m2 = np.sin(inclination)**4.0*3.0/8.0;
+		visibility_m0 = (3.0*np.cos(inclination)**2.0-1)**2.0*0.25
+		visibility_m1 = np.sin(inclination*2.0)**2.0*3.0/8.0
+		visibility_m2 = np.sin(inclination)**4.0*3.0/8.0
 		power += visibility_m0 * height/(1.0 + (4.0*(freq-centralFrequency)**2.0/(linewidth**2.0)))
 		power += visibility_m1 * height/(1.0 + (4.0*(freq-centralFrequency-splittingFrequency)**2.0/(linewidth**2.0)))
 		power += visibility_m1 * height/(1.0 + (4.0*(freq-centralFrequency+splittingFrequency)**2.0/(linewidth**2.0)))
@@ -50,7 +50,7 @@ def lorentzian_splitting_model(freq, modelParameters, fnyq, mode_l):
 		power += visibility_m3 * height/(1.0 + (4.0*(freq-centralFrequency-3.0*splittingFrequency)**2.0/(linewidth**2.0)))
 		power += visibility_m3 * height/(1.0 + (4.0*(freq-centralFrequency+3.0*splittingFrequency)**2.0/(linewidth**2.0)))
 
-	power *= responseFunction;
+	power *= responseFunction
 
 	return power
 
@@ -62,7 +62,7 @@ def sinc_model(freq, modelParameters, fnyq, resolution):
 
 	unresolvedArgument = np.pi * (freq - centralFrequency) / resolution
 	power = height * (np.sin(unresolvedArgument) / unresolvedArgument)**2.0
-	power *= responseFunction;
+	power *= responseFunction
 
 	return power
 

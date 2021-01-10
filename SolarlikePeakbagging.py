@@ -389,7 +389,7 @@ class SolarlikePeakbagging:
 		"""
 
 		# smooth the power spectrum
-		self._smooth_power(period=1.)
+		self._smooth_power(period=self.dnu/50.)
         
 		# slice the power spectrum
 		freq, power, powers = self._trim_power_spectrum(self.freq, self.power, 
@@ -549,7 +549,7 @@ class SolarlikePeakbagging:
 		fig = plt.figure(figsize=(15,12))
 
 		# smooth the power spectrum
-		self._smooth_power(period=1.)
+		self._smooth_power(period=self.dnu/50.)
         
 		# slice the power spectrum
 		freq, power, powers = self._trim_power_spectrum(self.freq, self.power, 
