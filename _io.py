@@ -5,72 +5,71 @@ __all__ = ["fitGuess"]
 
 class myStructure:
 
-	def __init__(self, headers, data):
-		# we do not indulge adults
-		assert type(headers) is dict, 
-				"type of headers should be dict."
-		assert type(data) is np.ndarray, 
-				"type of data should be ndarray."
-		assert (len(data.shape) is 1) & (not (data.dtype.names is None)), 
-				"data should be structured array with accessible field names."
-	
-		self.headers = headers
-		self.data = data
-		self.nheaders = len(headers)
-		self.ndata = len(ndata)
-		return
+    def __init__(self, headers, data):
+        # we do not indulge adults
+        assert type(headers) is dict, "type of headers should be dict."
+        assert type(data) is np.ndarray, 
+                "type of data should be ndarray."
+        assert (len(data.shape) is 1) & (not (data.dtype.names is None)), 
+                "data should be structured array with accessible field names."
+    
+        self.headers = headers
+        self.data = data
+        self.nheaders = len(headers)
+        self.ndata = len(ndata)
+        return
 
 
-	def write(self, file, listOfHeaderFormats, listOfDataFormats):
-		"""
-		docstring
-		"""
-		# write in self._outputdir+"frequencyGuess.txt"
+    def write(self, file, listOfHeaderFormats, listOfDataFormats):
+        """
+        docstring
+        """
+        # write in self._outputdir+"frequencyGuess.txt"
 
-		# with open(outputdir, "w+") as f:
-		file.write("----------\n")
-		file.write(", ".join(self.data.dtype.names)+"\n")
-		np.savetxt(file, self.data, delimiter=",", fmt=", ".join(listOfDataFormats))
+        # with open(outputdir, "w+") as f:
+        file.write("----------\n")
+        file.write(", ".join(self.data.dtype.names)+"\n")
+        np.savetxt(file, self.data, delimiter=",", fmt=", ".join(listOfDataFormats))
 
-		return self
+        return self
 
 
-	def read(self, file):
-		"""
-		docstring
-		"""
-		# read in self._outputdir+"frequencyGuess.txt"
+    def read(self, file):
+        """
+        docstring
+        """
+        # read in self._outputdir+"frequencyGuess.txt"
 
-		# content = file.split("----------\n")
+        # content = file.split("----------\n")
 
-		dtype = [() for i in range(self.nheaders)]
-				# [("mode_id", "int"),
-				# ("ifpeakbagging", "int"),
-				# ("igroup", "int"), 
-				# ("mode_l", "int"),
-				# ("mode_freq", "float")]
-		arraylist = np.genfromtxt(inputfile, 
-			delimiter=",", skip_header=1, dtype=dtype)
+        dtype = [() for i in range(self.nheaders)]
+                # [("mode_id", "int"),
+                # ("ifpeakbagging", "int"),
+                # ("igroup", "int"), 
+                # ("mode_l", "int"),
+                # ("mode_freq", "float")]
+        arraylist = np.genfromtxt(inputfile, 
+            delimiter=",", skip_header=1, dtype=dtype)
 
-		for block in content:
-			if block.startswith("#"): continue
-			lines = block.split("\n")
+        for block in content:
+            if block.startswith("#"): continue
+            lines = block.split("\n")
 
-			mode_group = int(lines[0].split(",")[-1])
-			ifpeakbagging = int(lines[1].split(",")[-1])
-			nmode = int(lines[2].split(",")[-1])
+            mode_group = int(lines[0].split(",")[-1])
+            ifpeakbagging = int(lines[1].split(",")[-1])
+            nmode = int(lines[2].split(",")[-1])
 
-			arr = [line.split(",") for line in lines[3:3+nmode]]
-			mode_l = np.array([a[0] for a in arr], dtype=int)
-			mode_freq = np.array([a[1] for a in arr], dtype=float)
-			mode_id = np.array([a[2] for a in arr], dtype=int)
-			self.add_group(mode_group, mode_l, mode_freq, ifpeakbagging=ifpeakbagging, mode_id=mode_id)
+            arr = [line.split(",") for line in lines[3:3+nmode]]
+            mode_l = np.array([a[0] for a in arr], dtype=int)
+            mode_freq = np.array([a[1] for a in arr], dtype=float)
+            mode_id = np.array([a[2] for a in arr], dtype=int)
+            self.add_group(mode_group, mode_l, mode_freq, ifpeakbagging=ifpeakbagging, mode_id=mode_id)
 
-		return self
+        return self
 
 
 if __name__ is "__main__":
-	print("Hello.")
+    print("Hello.")
 
 
 

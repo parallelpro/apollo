@@ -1,5 +1,7 @@
 import numpy as np
-from Models import *
+from .models import *
+
+__all__ = ['FitParameters', 'Priors', 'Likelihoods', 'Posteriors']
 
 class FitParameters:
 	def __init__(self, mode_freq, mode_l, freq, power, powers, dnu,

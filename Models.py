@@ -1,6 +1,9 @@
+#!/usr/bin/env/ python
+# coding: utf-8
+
 import numpy as np
 
-__all__ = ["lorentzian_splitting_model", "sinc_model", "flat_model"]
+__all__ = ["lorentzian_splitting_model", "sinc_model", "flat_model", "standard_background_model"]
 
 def response_function(freq, fnyq):
 	x = (np.pi/2.0)*freq/fnyq
@@ -71,3 +74,38 @@ def flat_model(freq, modelParameters, fnyq):
 	responseFunction = response_function(freq, fnyq)
 	power *= responseFunction
 	return power
+
+
+def standard_background_model(x, params, fnyq, NHarvey=3, if_return_oscillation=True):
+    '''
+    Return the value of gaussian given parameters.
+
+    Input:
+    x: array-like[N,]
+    params: flatNoiseLevel, heightOsc, numax, widthOsc, 
+            ampHarvey1, freqHarvey1,
+            (ampHarvey2, freqHarvey2,
+            (ampHarvey3, freqHarvey3))
+    fnyq: float, the nyquist frequency in unit of [x]
+    NHarvey: int, the number of Harvey profiles
+    if_return_oscillation: bool
+
+    Output:
+    y: array-like[N,]
+
+    '''
+    
+    flatNoiseLevel, heightOsc, numax, widthOsc = params[0:4]
+    power = np.zeros(len(x))
+
+    zeta = 2.0*2.0**0.5/np.pi
+    for iHarvey in range(NHarvey):
+        ampHarvey, freqHarvey = params[iHarvey*2+4:iHarvey*2+6]
+        power += zeta*ampHarvey**2.0/(freqHarvey*(1+(x/freqHarvey)**4.0))
+
+    if if_return_oscillation:
+        power += heightOsc * np.exp(-1.0*(numax-x)**2/(2.0*widthOsc**2.0))
+
+    power *= response_function(x, fnyq)
+    power += flatNoiseLevel
+    return power

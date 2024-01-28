@@ -1,5 +1,7 @@
+#!/usr/bin/env/ python
+# coding: utf-8
+
 import numpy as np
-import matplotlib
 # matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import os
@@ -8,100 +10,14 @@ import os
 from scipy.optimize import minimize, basinhopping
 from scipy.signal import find_peaks
 
+from .bayesian import FitParameters, Priors, Likelihoods, Posteriors
+from .fitter import FitModes, PTSampler, ESSampler, LSSampler
+from .toolkit import echelle
 
-from Bayesian import FitParameters, Priors, Likelihoods, Posteriors
-from Fitter import FitModes, PTSampler, ESSampler, LSSampler
+__all__ = ['get_modes']
 
-def echelle(x, y, period, fmin=None, fmax=None, echelletype="single", offset=0.0):
-	'''
-	Generate a z-map for echelle plotting.
 
-	Input:
-
-	x: array-like[N,]
-	y: array-like[N,]
-	period: the large separation,
-	fmin: the lower boundary
-	fmax: the upper boundary
-	echelletype: single/replicated
-	offset: the horizontal shift
-
-	Output:
-
-	x, y: 
-		two 1-d arrays.
-	z: 
-		a 2-d array.
-
-	Exemplary call:
-
-	import matplotlib.pyplot as plt
-	fig = plt.figure(figsize=(6,8))
-	ax1 = fig.add_subplot(111)
-	echx, echy, echz = echelle(tfreq,tpowers_o,dnu,numax-9.0*dnu,numax+9.0*dnu,echelletype="single",offset=offset)
-	levels = np.linspace(np.min(echz),np.max(echz),500)
-	ax1.contourf(echx,echy,echz,cmap="gray_r",levels=levels)
-	ax1.axis([np.min(echx),np.max(echx),np.min(echy),np.max(echy)])
-	if offset > 0.0:
-		ax1.set_xlabel("(Frequency - "+str("{0:.2f}").format(offset)+ ") mod "+str("{0:.2f}").format(dnu) + " ($\mu$Hz)")
-	if offset < 0.0:
-		ax1.set_xlabel("(Frequency + "+str("{0:.2f}").format(np.abs(offset))+ ") mod "+str("{0:.2f}").format(dnu) + " ($\mu$Hz)")
-	if offset == 0.0:
-		ax1.set_xlabel("Frequency mod "+str("{0:.2f}").format(dnu) + " ($\mu$Hz)")
-	plt.savefig("echelle.png")
-
-	'''
-
-	if not echelletype in ["single", "replicated"]:
-		raise ValueError("echelletype is on of 'single', 'replicated'.")
-
-	if len(x) != len(y): 
-		raise ValueError("x and y must have equal size.")	
-
-	if fmin is None: fmin=0.
-	if fmax is None: fmax=np.nanmax(x)
-
-	fmin = fmin - offset
-	fmax = fmax - offset
-	x = x - offset
-
-	if fmin <= 0.0:
-		fmin = 0.0
-	else:
-		fmin = fmin - (fmin % period)
-
-	# first interpolate
-	samplinginterval = np.median(x[1:-1] - x[0:-2]) * 0.1
-	xp = np.arange(fmin,fmax+period,samplinginterval)
-	yp = np.interp(xp, x, y)
-
-	n_stack = int((fmax-fmin)/period)
-	n_element = int(period/samplinginterval)
-	#print(n_stack,n_element,len())
-
-	morerow = 2
-	arr = np.arange(1,n_stack) * period # + period/2.0
-	arr2 = np.array([arr,arr])
-	yn = np.reshape(arr2,len(arr)*2,order="F")
-	yn = np.insert(yn,0,0.0)
-	yn = np.append(yn,n_stack*period) + fmin #+ offset
-
-	if echelletype == "single":
-		xn = np.arange(1,n_element+1)/n_element * period
-		z = np.zeros([n_stack*morerow,n_element])
-		for i in range(n_stack):
-			for j in range(i*morerow,(i+1)*morerow):
-				z[j,:] = yp[n_element*(i):n_element*(i+1)]
-	if echelletype == "replicated":
-		xn = np.arange(1,2*n_element+1)/n_element * period
-		z = np.zeros([n_stack*morerow,2*n_element])
-		for i in range(n_stack):
-			for j in range(i*morerow,(i+1)*morerow):
-				z[j,:] = np.concatenate([yp[n_element*(i):n_element*(i+1)],yp[n_element*(i+1):n_element*(i+2)]])
-
-	return xn, yn, z
-
-class SolarlikePeakbagging:
+class get_modes:
 	"""docstring for SolarlikePeakbagging"""
 	def __init__(self, starname, outputdir, fnyq, numax):
 		"""
@@ -619,12 +535,11 @@ class SolarlikePeakbagging:
 		### visulization (left) - plot echelle and collapsed echelle to locate peak
 		# ax1 = plt.subplot2grid((5,3), (0,0), rowspan=4)
 		ax1 = fig.add_subplot(1,2,1)
-		echx, echy, echz = echelle(freq, powers, dnu, freq.min(), freq.max(), 
+		z, ext, _, _ = echelle(freq, powers, dnu, freq.min(), freq.max(), 
 			echelletype="single", offset=offset)
-		levels = np.linspace(np.min(echz), np.max(echz), 500)
-		ax1.contourf(echx, echy, echz, cmap="gray_r", levels=levels)
-		ax1.axis([np.min(echx), np.max(echx), np.min(echy), np.max(echy)])
+		ax1.imshow(z, extent=ext, cmap="gray_r")
 		ax1.axvline(dnu, color="C0")
+		
 		# labels on the right side of the echelle
 		for iblock in range(n_blocks):
 			ax1.text(label_echx[iblock], label_echy[iblock], label_text[iblock],

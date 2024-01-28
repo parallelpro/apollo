@@ -1,6 +1,7 @@
-import numpy as np 
-import matplotlib
-matplotlib.use("Agg")
+#!/usr/bin/env/ python
+# coding: utf-8
+
+import numpy as np
 import matplotlib.pyplot as plt
 
 
@@ -9,6 +10,8 @@ from scipy.optimize import minimize, basinhopping
 import emcee
 import corner
 import sys 
+
+from .toolkit import return_2dmap_axes, plot_mcmc_traces
 
 # under development / improvement:
 # 1. use smart ways to output data
@@ -27,36 +30,6 @@ class FitModes:
 		self.power = power_for_plot
 		self.powers = powers_for_plot
 		return
-
-	def _return_2dmap_axes(self, numberOfSquareBlocks):
-
-		# Some magic numbers for pretty axis layout.
-		# stole from corner
-		Kx = int(np.ceil(numberOfSquareBlocks**0.5))
-		Ky = Kx if (Kx**2-numberOfSquareBlocks) < Kx else Kx-1
-
-		factor = 2.0           # size of one side of one panel
-		lbdim = 0.4 * factor   # size of left/bottom margin, default=0.2
-		trdim = 0.2 * factor   # size of top/right margin
-		whspace = 0.30         # w/hspace size
-		plotdimx = factor * Kx + factor * (Kx - 1.) * whspace
-		plotdimy = factor * Ky + factor * (Ky - 1.) * whspace
-		dimx = lbdim + plotdimx + trdim
-		dimy = lbdim + plotdimy + trdim
-
-		# Create a new figure if one wasn't provided.
-		fig, axes = plt.subplots(Ky, Kx, figsize=(dimx, dimy), squeeze=False)
-
-		# Format the figure.
-		l = lbdim / dimx
-		b = lbdim / dimy
-		t = (lbdim + plotdimy) / dimy
-		r = (lbdim + plotdimx) / dimx
-		fig.subplots_adjust(left=l, bottom=b, right=r, top=t,
-							wspace=whspace, hspace=whspace)
-		axes = np.concatenate(axes)
-
-		return fig, axes
 
 	def _plot_fit_results(self, freq, power, powers, tfreq, power_guess, power_fit,
 							mode_freq, mode_l, dnu, priorGuess):
@@ -93,27 +66,11 @@ class FitModes:
 
 		return fig
 
+	def _return_2dmap_axes(self, numberOfSquareBlocks):
+		return return_2dmap_axes(numberOfSquareBlocks)
 
 	def _plot_mcmc_traces(self, ndim, samples, para_names):
-
-		fig, axes = self._return_2dmap_axes(ndim)
-
-		for i in range(ndim):
-			ax = axes[i]
-			evol = samples[:,i]
-			Npoints = samples.shape[0]
-			ax.plot(np.arange(Npoints)/Npoints, evol, color="gray", lw=1, zorder=1)
-			Nseries = int(len(evol)/15.0)
-			evol_median = np.array([np.median(evol[i*Nseries:(i+1)*Nseries]) for i in range(0,15)])
-			evol_std = np.array([np.std(evol[i*Nseries:(i+1)*Nseries]) for i in range(0,15)])
-			evol_x = np.array([np.median(np.arange(Npoints)[i*Nseries:(i+1)*Nseries]/Npoints) for i in range(0,15)])
-			ax.errorbar(evol_x, evol_median, yerr=evol_std, color="C0", ecolor="C0", capsize=2)
-			ax.set_ylabel(para_names[i])
-
-		for ax in axes[i+1:]:
-			fig.delaxes(ax)
-
-		return fig
+		return plot_mcmc_traces(ndim, samples, para_names)
 
 
 class PTSampler(FitModes):
