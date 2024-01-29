@@ -18,17 +18,14 @@ __all__ = ['get_modes']
 
 
 class get_modes:
-	"""docstring for SolarlikePeakbagging"""
+	"""docstring for get_modes"""
 	def __init__(self, starname, outputdir, fnyq, numax):
 		"""
 		Docstring
     	"""
 
-		# super(SolarlikePeakbagging, self).__init__()
-		self._sep = "\\" if os.name=="nt" else "/"
 		self._starname = starname
 		self._outputdir = outputdir  # "with a / in the end"
-		assert outputdir.endswith(self._sep), "outputdir should end with "+self._sep
 		self._fnyq = fnyq  # in microHz (muHz) 
 
 		# numax and dnu are only approximations
@@ -539,7 +536,7 @@ class get_modes:
 			echelletype="single", offset=offset)
 		ax1.imshow(z, extent=ext, cmap="gray_r")
 		ax1.axvline(dnu, color="C0")
-		
+
 		# labels on the right side of the echelle
 		for iblock in range(n_blocks):
 			ax1.text(label_echx[iblock], label_echy[iblock], label_text[iblock],
@@ -693,9 +690,9 @@ class get_modes:
 		cdata.fnyq = fnyq
 
 		# specify output directory
-		filepath = self._outputdir+"pkbg"+self._sep
+		filepath = os.path.join(self._outputdir, "pkbg")
 		if not os.path.exists(filepath): os.mkdir(filepath)
-		filepath = filepath+str(igroup)+self._sep
+		filepath = os.path.join(filepath, str(igroup))
 		if not os.path.exists(filepath): os.mkdir(filepath)
 
 
@@ -769,7 +766,7 @@ class get_modes:
 		# subgroup = 0, the fit which includes all modes
 		tdata = datacube()
 
-		tfilepath = filepath+"0"+self._sep
+		tfilepath = os.path.join(filepath, "0")
 		if not os.path.exists(tfilepath): os.mkdir(tfilepath)
 		tdata.filepath = tfilepath
 		tdata.mode_freq = mode_freq
@@ -783,7 +780,7 @@ class get_modes:
 		for isubgroup in range(1,n_subgroups+1):
 			tdata = datacube()
 
-			tfilepath = filepath+str(isubgroup)+self._sep
+			tfilepath = os.path.join(filepath, str(isubgroup))
 			if not os.path.exists(tfilepath): os.mkdir(tfilepath)
 			tdata.filepath = tfilepath
 			idx = np.ones(mode_freq.shape[0], dtype=bool)
@@ -905,7 +902,7 @@ class get_modes:
 			raise ValueError("fittype should be one of ['Ensemble', 'LeastSquare']")
 
 		# specify output directory
-		filepath = self._outputdir+self._sep
+		filepath = self._outputdir
 
 		#
 		groups = np.unique(self.modeInputTable["igroup"])
@@ -939,7 +936,7 @@ class get_modes:
 
 		# store pkbg results
 		for igroup in groups:
-			tfilepath = filepath + "pkbg" + self._sep + str(int(igroup)) + self._sep
+			tfilepath = os.path.join(filepath, "pkbg", str(int(igroup)))
 
 			mode_l = self.modeInputTable["mode_l"][self.modeInputTable["igroup"]==igroup]
 			mode_id = self.modeInputTable["mode_id"][self.modeInputTable["igroup"]==igroup]
@@ -961,7 +958,7 @@ class get_modes:
 			paraNamesInBlock = fitParameters.paraNamesInBlock
 
 			if fitType == "ParallelTempering":
-				res = np.loadtxt(tfilepath+"0"+self._sep+"PTsummary.txt", delimiter=",", ndmin=2)
+				res = np.loadtxt(os.path.join(tfilepath, "0", "PTsummary.txt"), delimiter=",", ndmin=2)
 
 				# mode paras
 				itheta = 0
@@ -1009,16 +1006,16 @@ class get_modes:
 					theta += 1
 
 				if ifTestH1: 
-					lnE0, lnE0_err = np.loadtxt(tfilepath+"0"+self._sep+"PTevidence.txt")
+					lnE0, lnE0_err = np.loadtxt(os.path.join(tfilepath, "0", "PTevidence.txt"))
 					for imode in range(nmodes):
-						lnE1, lnE1_err = np.loadtxt(tfilepath+str(imode+1)+self._sep+"PTevidence.txt")
+						lnE1, lnE1_err = np.loadtxt(os.path.join(tfilepath, str(imode+1), "PTevidence.txt"))
 						lnK = lnE0 - lnE1
 						lnK_err = (lnE0_err**2.0 + lnE1_err**2.0)**0.5
 						tmodeOutputTable["PTlnK"][imode] = lnK
 						tmodeOutputTable["PTlnK_err"][imode] = lnK_err
 
 			if fitType == "Ensemble":
-				res = np.loadtxt(tfilepath+"0"+self._sep+"ESsummary.txt", delimiter=",", ndmin=2)
+				res = np.loadtxt(os.path.join(tfilepath, "0", "ESsummary.txt"), delimiter=",", ndmin=2)
 
 				# mode paras
 				itheta = 0
@@ -1066,7 +1063,7 @@ class get_modes:
 					theta += 1
 
 			if fitType == "LeastSquare":
-				res = np.loadtxt(tfilepath+"0"+self._sep+"ESsummary.txt", delimiter=",", ndmin=2)
+				res = np.loadtxt(os.path.join(tfilepath, "0", "ESsummary.txt"), delimiter=",", ndmin=2)
 
 				# mode paras
 				itheta = 0
